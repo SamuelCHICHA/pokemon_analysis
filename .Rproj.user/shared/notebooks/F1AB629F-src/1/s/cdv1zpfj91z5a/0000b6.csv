@@ -1,0 +1,8 @@
+"0","#Getting pokemons of the same generation than the one we picked"
+"0","same_gen_pokemons <- filter(pokemons, Generation == pokemon$Generation)"
+"0","#Creating column to aggregate on"
+"0","result.min <- cbind(""Min"", min(pokemons$HP), min(pokemons$Attack), min(pokemons$Defense), min(pokemons$`Sp. Atk`), min(pokemons$`Sp. Def`), min(pokemons$Speed))"
+"0","colnames(result.min) <- colnames(same_gen_pokemons[4:10])"
+"0","#colnames(result.min$) <- ""Name"""
+"0","#result.max <- aggregate(pokemons[5:10], list(pokemons$tmp), max)"
+"0","#result.mean <- aggregate(pokemons[5:10], list(pokemons$tmp), mean)"

@@ -1,0 +1,5 @@
+"0","#Computing number of generations, pokemons and legendary ones"
+"0","nb_gen <- length(unique(pokemons$Generation))"
+"0","nb_pokemons <- nrow(pokemons)"
+"0","nb_leg <- nrow(pokemons[pokemons$Legendary == TRUE,])"
+"0","picked <- params$pokemon"

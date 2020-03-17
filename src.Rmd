@@ -1,0 +1,82 @@
+---
+Rtitle: "Projet Final"
+author: "Samuel CHICHA"
+date: "10/03/2020"
+output: pdf_document
+params:
+  pokemon: "Persian"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#Checking if library is well imported and install them if not
+if(!require(readr)){
+  install.packages("readr")
+  require(readr)
+}
+if(!require(dplyr)){
+  install.packages("dplyr")
+  require(dplyr)
+}
+if(!require(ggplot2)){
+  install.packages("ggplot2")
+  require(ggplot2)
+}
+if(!require(fmsb)){
+  install.packages("fmsb")
+  require(fmsb)
+}
+#Checking if dataset exists and download it if not
+if(!file.exists("data/pokemon.csv"))
+  download.file(url = "https://courses.datacrunch.sh/courses/intro-analyse-r/TD6/pokemon.csv", destfile = "data/pokemon.csv", mode = "wb")
+pokemons <- read_csv("data/pokemon.csv")
+```
+
+# Base de données
+
+```{r intro_bd, echo=FALSE}
+#Computing number of generations, pokemons and legendary ones
+nb_gen <- length(unique(pokemons$Generation))
+nb_pokemons <- nrow(pokemons)
+nb_leg <- nrow(pokemons[pokemons$Legendary == TRUE,])
+picked <- params$pokemon
+```
+
+La base de données présente une liste de `r nb_pokemons` pokémons étalés sur `r nb_gen` générations dont `r nb_leg` sont légendaires. 
+Nous étudierons ici le pokémon "`r picked`".
+
+# Etude du pokémon
+
+```{r intro_persian, echo=FALSE}
+#Getting the pokemon we picked
+pokemon <- filter(pokemons, Name == picked)
+```
+>
+> __Nom__: `r pokemon$Name`
+>
+> __Type__: `r pokemon$'Type 1'`
+>
+> __Points de vie__: `r pokemon$HP`
+>
+> __Attaque__: `r pokemon$Attack`
+>
+> __Defense__: `r pokemon$Defense`
+>
+> __Attaque spécial__: `r pokemon$'Sp. Atk'`
+>
+> __Défense spécial__: `r pokemon$'Sp. Def'`
+>
+> __Vitesse__: `r pokemon$Speed`
+
+```{r first_comparison, echo=FALSE}
+#Getting pokemons of the same generation than the one we picked
+same_gen_pokemons <- filter(pokemons, Generation == pokemon$Generation)
+#Creating column to aggregate on
+result.min <- cbind("Min", min(pokemons$HP), min(pokemons$Attack), min(pokemons$Defense), min(pokemons$`Sp. Atk`), min(pokemons$`Sp. Def`), min(pokemons$Speed))
+colnames(result.min) <- colnames(same_gen_pokemons[4:10])
+#colnames(result.min$) <- "Name"
+#result.max <- aggregate(pokemons[5:10], list(pokemons$tmp), max)
+#result.mean <- aggregate(pokemons[5:10], list(pokemons$tmp), mean)
+```
+
+# Battre Lugia

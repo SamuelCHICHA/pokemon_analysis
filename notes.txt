@@ -1,0 +1,4 @@
+### Questions ###
+- NA instead of name 
+- Label for color of the bar plot
+- Label for the horizontal lines

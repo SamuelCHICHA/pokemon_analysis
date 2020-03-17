@@ -1,0 +1,1 @@
+"0","persian <- pokemons[pokemons$Name == ""Persian"", ]"
