@@ -1,2 +1,0 @@
-"0","#Getting the pokemon we picked"
-"0","pokemon <- filter(pokemons, Name == picked)"
