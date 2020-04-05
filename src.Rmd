@@ -7,7 +7,7 @@ params:
   pokemon: "Persian"
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 #Checking if library is well imported and install them if not
 if(!require(readr)){
@@ -38,7 +38,7 @@ pokemons <- read_csv("data/pokemon.csv")
 
 # Base de données
 
-```{r intro_bd, echo=FALSE}
+```{r Introduction to the database, echo=FALSE}
 #Computing number of generations, pokemons and legendary ones
 nb_gen <- unique(pokemons$Generation) %>% length()
 nb_pokemons <- nrow(pokemons)
@@ -51,7 +51,7 @@ Nous étudierons ici le pokémon "`r picked`".
 
 # Etude du pokémon
 
-```{r intro_persian, echo=FALSE}
+```{r Introduction to the pokemon, echo=FALSE}
 #Getting the pokemon we picked
 pokemon <- filter(pokemons, Name == picked)
 if(nrow(pokemon) != 1) stop("Le pokémon n'existe pas.")
@@ -62,7 +62,9 @@ if(nrow(pokemon) != 1) stop("Le pokémon n'existe pas.")
 >
 > __Nom__: `r pokemon$Name`
 >
-> __Type__: `r pokemon$'Type 1'`
+> __Type 1__: `r pokemon$'Type 1'`
+>
+> __Type 2__: `r ifelse(!is.na(pokemon %>% select("Type 2")), pokemon %>% select("Type 2"), "None")`
 >
 > __Points de vie__: `r pokemon$HP`
 >
@@ -78,7 +80,7 @@ if(nrow(pokemon) != 1) stop("Le pokémon n'existe pas.")
 
 2. Comparaison avec les pokémons issus de la même génération
 
-```{r Première comparaison, echo=FALSE}
+```{r First comparison, echo=FALSE}
 #Getting pokemons of the same generation than the one we picked
 same_gen_pokemons <- pokemons %>% filter(Generation == pokemon$Generation)
 
@@ -175,11 +177,11 @@ legend(
 
 3. Comparaison avec les pokémons ayant les mêmes types
 
-```{r Deuxième comparaison, echo = FALSE}
+```{r Second comparison, echo = FALSE}
 #Getting pokemons of the same generation and same type than the one we picked
-same_type_pokemons <- same_gen_pokemons %>% filter(same_gen_pokemons$`Type 1` == pokemon$`Type 1`) #Better ?
+same_type_pokemons <- same_gen_pokemons %>% filter(`Type 1` == pokemon$`Type 1`) #Better ?
 if(!is.na(pokemon$`Type 2`))
-  same_type_pokemons <- same_type_pokemons %>% filter(same_gen_pokemons$`Type 2` == pokemon$`Type 2`)
+  same_type_pokemons <- same_type_pokemons %>% filter(`Type 2` == pokemon$`Type 2`)
 
 result["Maximum", ] <- c(
   same_type_pokemons$HP %>% max(),
@@ -240,22 +242,53 @@ legend(
 
 # Battre Lugia
 
-```{r Recherche pokémon pouvant battre Lugia, echo = FALSE}
+```{r Recherche pokémon pouvant battre Lugia, echo = FALSE, message = FALSE}
 lugia <- pokemons %>% filter(Name == 'Lugia')
-non_leg_pokemons <- pokemons %>% filter(Legendary == FALSE)
-fast_pok <- non_leg_pokemons %>% filter(Speed >= lugia$Speed)
-off_pok <- non_leg_pokemons %>% filter(Attack >= lugia$Attack)
-def_pok <- non_leg_pokemons %>% filter(Defense >= lugia$Defense)
-hp_pok <- non_leg_pokemons %>% filter(HP >= lugia$HP)
-sp_off_pok <- non_leg_pokemons %>% filter(non_leg_pokemons$'Sp. Atk' >= lugia$`Sp. Atk`)
-sp_def_pok <- non_leg_pokemons %>% filter(non_leg_pokemons$'Sp. Def' >= lugia$`Sp. Def`)
+pokemons_nl_sg <- pokemons %>% filter(Legendary == FALSE & Generation == lugia$Generation)
+fast_pok <- pokemons_nl_sg %>% filter(Speed >= lugia$Speed)
+off_pok <- pokemons_nl_sg %>% filter(Attack >= lugia$Attack)
+def_pok <- pokemons_nl_sg %>% filter(Defense >= lugia$Defense)
+hp_pok <- pokemons_nl_sg %>% filter(HP >= lugia$HP)
+sp_off_pok <- pokemons_nl_sg %>% filter(`Sp. Atk` >= lugia$`Sp. Atk`)
+sp_def_pok <- pokemons_nl_sg %>% filter(`Sp. Def` >= lugia$`Sp. Def`)
 
 #Source used to intersect dataframes
 #https://dplyr.tidyverse.org/reference/setops.html
 
 #We know that Lugia is of type flying and psychic so we search for type that are strong against that.
 pokemon_ws <- read_csv("data/pokemon_ws.csv")
+effective_type <- pokemon_ws[pokemon_ws %>% select(lugia$`Type 1`) == 2 | pokemon_ws %>% select(lugia$`Type 2`) == 2,]$Attacking
 
+#Now that we have the type effective against Lugia, we can retrieve the pokemons that have those types.
 #We know by looking into the data that Lugia has high scores in special defense, defense and speed. With those caracteristics, it is more unlikely to find pokemons that will surpass Lugia, which is why we will intersect the related dataframes at the end.
+effective_pokemons <- pokemons %>% 
+  filter(`Type 1` %in% effective_type | `Type 2` %in% effective_type) %>% #We get the pokemons with at least one effective type
+  intersect(pokemons_nl_sg) %>% #We keep only the non legendary ones
+  intersect(off_pok) %>% #We keep only those who outbest lugia in attack
+  intersect(sp_off_pok) %>% #Same here with special attack
+  intersect(fast_pok) #Same here with speed
 
+best_pokemon <- effective_pokemons %>% 
+  filter(Attack == max(effective_pokemons$Attack)) #We keep only the one with the best attack score.
 ```
+
+Voici un pokémon qui pourrait battre Lugia:
+
+>
+> __Nom__: `r best_pokemon$Name`
+>
+> __Type 1__: `r best_pokemon$'Type 1'`
+>
+> __Type 2__: `r ifelse(!is.na(best_pokemon %>% select("Type 2")), best_pokemon %>% select("Type 2"), "None")`
+>
+> __Points de vie__: `r best_pokemon$HP`
+>
+> __Attaque__: `r best_pokemon$Attack`
+>
+> __Defense__: `r best_pokemon$Defense`
+>
+> __Attaque spécial__: `r best_pokemon$'Sp. Atk'`
+>
+> __Défense spécial__: `r best_pokemon$'Sp. Def'`
+>
+> __Vitesse__: `r best_pokemon$Speed`
