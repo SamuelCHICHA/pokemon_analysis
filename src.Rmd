@@ -7,8 +7,10 @@ params:
   pokemon: "Persian"
 ---
 
-```{r setup, include=FALSE, message = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
 #Checking if library is well imported and install them if not
 if(!require(readr)){
   install.packages("readr")
@@ -38,7 +40,7 @@ pokemons <- read_csv("data/pokemon.csv")
 
 # Base de données
 
-```{r Introduction to the database, echo=FALSE}
+```{r Introduction to the database}
 #Computing number of generations, pokemons and legendary ones
 nb_gen <- unique(pokemons$Generation) %>% length()
 nb_pokemons <- nrow(pokemons)
@@ -51,7 +53,7 @@ Nous étudierons ici le pokémon "`r picked`".
 
 # Etude du pokémon
 
-```{r Introduction to the pokemon, echo=FALSE}
+```{r Introduction to the pokemon}
 #Getting the pokemon we picked
 pokemon <- filter(pokemons, Name == picked)
 if(nrow(pokemon) != 1) stop("Le pokémon n'existe pas.")
@@ -80,7 +82,7 @@ if(nrow(pokemon) != 1) stop("Le pokémon n'existe pas.")
 
 2. Comparaison avec les pokémons issus de la même génération
 
-```{r First comparison, echo=FALSE}
+```{r First comparison}
 #Getting pokemons of the same generation than the one we picked
 same_gen_pokemons <- pokemons %>% filter(Generation == pokemon$Generation)
 
@@ -177,7 +179,7 @@ legend(
 
 3. Comparaison avec les pokémons ayant les mêmes types
 
-```{r Second comparison, echo = FALSE}
+```{r Second comparison}
 #Getting pokemons of the same generation and same type than the one we picked
 same_type_pokemons <- same_gen_pokemons %>% filter(`Type 1` == pokemon$`Type 1`) #Better ?
 if(!is.na(pokemon$`Type 2`))
@@ -238,11 +240,35 @@ legend(
   cex=1.2,
   pt.cex=3
   )
+
+#Let's determine what our pokemon is capable of compared to the others
+place_off <- ((same_type_pokemons %>% arrange(Attack) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+place_def <- ((same_type_pokemons %>% arrange(Defense) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+place_sp_off <- ((same_type_pokemons %>% arrange(`Sp. Atk`) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+place_sp_def <- ((same_type_pokemons %>% arrange(`Sp. Def`) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+place_hp <- ((same_type_pokemons %>% arrange(HP) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+place_speed <- ((same_type_pokemons %>% arrange(Speed) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
 ```
+`r pokemon$Name` se situe de la manière suivante par rapport aux autres pokémons de sa génération et partageant au moins un même type:
+
+Il fait partie du top: 
+
+* `r 100-place_speed`% avec le plus de vitesse.
+
+* `r 100-place_off`% avec le plus d'attaque.
+
+* `r 100-place_def`% avec le plus de défense.
+
+* `r 100-place_sp_off`% avec le plus d'attaque spéciale.
+
+* `r 100-place_sp_def`% avec le plus de défense spéciale.
+
+* `r 100-place_hp`% avec le plus de points de vie.
+
 
 # Battre Lugia
 
-```{r Recherche pokémon pouvant battre Lugia, echo = FALSE, message = FALSE}
+```{r Recherche pokémon pouvant battre Lugia}
 lugia <- pokemons %>% filter(Name == 'Lugia')
 pokemons_nl_sg <- pokemons %>% filter(Legendary == FALSE & Generation == lugia$Generation)
 fast_pok <- pokemons_nl_sg %>% filter(Speed >= lugia$Speed)
