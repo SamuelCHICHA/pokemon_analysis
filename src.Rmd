@@ -28,6 +28,10 @@ if(!require(fmsb)){
   install.packages("fmsb")
   require(fmsb)
 }
+if(!require(gridExtra)){
+  install.packages("gridExtra")
+  require(gridExtra)
+}
 #Downloading pokemon dataset if it is not there already.
 if(!file.exists("data/pokemon.csv"))
   download.file(url = "https://courses.datacrunch.sh/courses/intro-analyse-r/TD6/pokemon.csv", destfile = "data/pokemon.csv", mode = "wb")
@@ -40,24 +44,64 @@ pokemons <- read_csv("data/pokemon.csv")
 
 # Base de données
 
-```{r Introduction to the database}
-#Computing number of generations, pokemons and legendary ones
-nb_gen <- unique(pokemons$Generation) %>% length()
-nb_pokemons <- nrow(pokemons)
-nb_leg <- pokemons %>% filter(Legendary==TRUE) %>% nrow()
-picked <- params$pokemon
+```{r Introduction to the database, 1st}
+nb_pokemons <- pokemons %>% nrow()
+pokemon <- pokemons %>% filter(Name == params$pokemon)
+if(pokemon %>% nrow() != 1) stop("Le pokémon n'existe pas.")
 ```
 
-La base de données présente une liste de `r nb_pokemons` pokémons étalés sur `r nb_gen` générations dont `r nb_leg` sont légendaires. 
-Nous étudierons ici le pokémon "`r picked`".
+Nous allons étudier une base de données portant sur __pokémons__. Celle-ci comporte des données sur `r nb_pokemons` d'entre eux. Parmi ces données, on peut retrouver leurs caractéristiques tel que la __vitesse__, __l'attaque__, la __défense__, __l'attaque spéciale__, la __défénse spéciale__ et les __points de vie__. Nous savons à quelle __génération__ chacun d'entre eux appartient, quels __types__ (herbe, vol, feu, etc..) ils possèdent et si oui ou non ce sont des pokémons __légendaires__.
+
+Nous étudierons ici le pokémon nommé __`r pokemon$Name`__.
+
+Voici un petit aperçu de la base de données :
+
+`r pokemons %>% head() %>% as.data.frame() %>% knitr::kable(format="markdown")`
+
+Regardons maintenant comment sont répartis les variables:
+
+```{r Introduction to the database, 2nd}
+speed <- pokemons %>% 
+  ggplot(aes(x = Speed)) +
+  geom_density() +
+  theme_minimal() +
+  xlab("Vitesse")
+
+attack <- pokemons %>% 
+  ggplot(aes(x = Attack)) +
+  geom_density() +
+  theme_minimal() +
+  xlab("Attaque")
+
+defense <- pokemons %>% 
+  ggplot(aes(x = Defense)) +
+  geom_density() +
+  theme_minimal() +
+  xlab("Défense")
+
+sp_attack <- pokemons %>% 
+  ggplot(aes(x = `Sp. Atk`)) +
+  geom_density() +
+  theme_minimal() +
+  xlab("Attaque spéciale")
+
+sp_defense <- pokemons %>% 
+  ggplot(aes(x = `Sp. Def`)) +
+  geom_density() +
+  theme_minimal() +
+  xlab("Défense spéciale")
+
+hp <- pokemons %>% 
+  ggplot(aes(x = HP)) +
+  geom_density() +
+  theme_minimal() +
+  xlab("Point de vie")
+
+grid.arrange(attack, defense, speed, hp, sp_attack, sp_defense)
+```
+
 
 # Etude du pokémon
-
-```{r Introduction to the pokemon}
-#Getting the pokemon we picked
-pokemon <- filter(pokemons, Name == picked)
-if(nrow(pokemon) != 1) stop("Le pokémon n'existe pas.")
-```
 
 1. Fiche du pokémon
 
@@ -132,7 +176,7 @@ sub <- cbind(
   pokemon$Speed
   )
 colnames(sub) <- same_gen_pokemons[5:10] %>% colnames()
-rownames(sub) <- picked
+rownames(sub) <- pokemon$Name
 
 #Gathering results
 result <- rbind(
@@ -160,7 +204,7 @@ radarchart(
   axislabcol="grey",
   cglwd=0.8,
   vlcex=0.8,
-  title = paste("Comparaison entre", picked) %>% paste("et les pokémons de la même génération.", sep = "\n")
+  title = paste("Comparaison entre", pokemon$Name) %>% paste("et les pokémons de la même génération.", sep = "\n")
   )
 
 # Add a legend
@@ -225,7 +269,7 @@ radarchart(
   axislabcol="grey",
   cglwd=0.8,
   vlcex=0.8,
-  title = paste("Comparaison entre", picked) %>% paste("et les pokémons de la même génération et du même type.", sep = "\n")
+  title = paste("Comparaison entre", pokemon$Name) %>% paste("et les pokémons de la même génération et du même type.", sep = "\n")
   )
 
 # Add a legend
