@@ -45,12 +45,11 @@ pokemons <- read_csv("data/pokemon.csv")
 # Base de données
 
 ```{r Introduction to the database, 1st}
-nb_pokemons <- pokemons %>% nrow()
 pokemon <- pokemons %>% filter(Name == params$pokemon)
 if(pokemon %>% nrow() != 1) stop("Le pokémon n'existe pas.")
 ```
 
-Nous allons étudier une base de données portant sur __pokémons__. Celle-ci comporte des données sur `r nb_pokemons` d'entre eux. Parmi ces données, on peut retrouver leurs caractéristiques tel que la __vitesse__, __l'attaque__, la __défense__, __l'attaque spéciale__, la __défénse spéciale__ et les __points de vie__. Nous savons à quelle __génération__ chacun d'entre eux appartient, quels __types__ (herbe, vol, feu, etc..) ils possèdent et si oui ou non ce sont des pokémons __légendaires__.
+Nous allons étudier une base de données portant sur __pokémons__. Celle-ci comporte des données sur `r pokemons %>% nrow()` d'entre eux. Parmi ces données, on peut retrouver leurs caractéristiques tel que la __vitesse__, __l'attaque__, la __défense__, __l'attaque spéciale__, la __défénse spéciale__ et les __points de vie__. Nous savons à quelle __génération__ chacun d'entre eux appartient, quels __types__ (herbe, vol, feu, etc..) ils possèdent et si oui ou non ce sont des pokémons __légendaires__.
 
 Nous étudierons ici le pokémon nommé __`r pokemon$Name`__.
 
@@ -58,46 +57,72 @@ Voici un petit aperçu de la base de données :
 
 `r pokemons %>% head() %>% as.data.frame() %>% knitr::kable(format="markdown")`
 
-Regardons maintenant comment sont répartis les variables:
+Les variables _HP_, _Attack_, _Defense_, _Speed_, _Sp. Atk_ et _Sp. Def_ sont des variables quantitatives. Toutes les autres sont qualitatives. En ce qui concerne le _Name_, _Type 1_ et _Type 2_, c'est une __chaîne de caractère__ (modalité la plus fréquente). _L'index_ et la _génération_ sont __numériques__. Enfin, la variable _légendaire_ est un __booléen__ (modalité la moins fréquente).
+
+Regardons maintenant comment sont répartis ces variables quantitatives:
 
 ```{r Introduction to the database, 2nd}
-speed <- pokemons %>% 
-  ggplot(aes(x = Speed)) +
-  geom_density() +
-  theme_minimal() +
+
+base_density <- pokemons %>% 
+  ggplot() +
+  theme_minimal() + ylab("Densité")
+
+speed_density <- base_density +
+  geom_density(aes(x = Speed)) +
   xlab("Vitesse")
 
-attack <- pokemons %>% 
-  ggplot(aes(x = Attack)) +
-  geom_density() +
-  theme_minimal() +
+attack_density <- base_density +
+  geom_density(aes(x = Attack)) +
   xlab("Attaque")
 
-defense <- pokemons %>% 
-  ggplot(aes(x = Defense)) +
-  geom_density() +
-  theme_minimal() +
+defense_density <- base_density +
+  geom_density(aes(x = Defense)) +
   xlab("Défense")
 
-sp_attack <- pokemons %>% 
-  ggplot(aes(x = `Sp. Atk`)) +
-  geom_density() +
-  theme_minimal() +
+sp_attack_density <- base_density +
+  geom_density(aes(x = `Sp. Atk`)) +
   xlab("Attaque spéciale")
 
-sp_defense <- pokemons %>% 
-  ggplot(aes(x = `Sp. Def`)) +
-  geom_density() +
-  theme_minimal() +
+sp_defense_density <- base_density +
+  geom_density(aes(x = `Sp. Def`)) +
   xlab("Défense spéciale")
 
-hp <- pokemons %>% 
-  ggplot(aes(x = HP)) +
-  geom_density() +
-  theme_minimal() +
+hp_density <- base_density +
+  geom_density(aes(x = HP)) +
   xlab("Point de vie")
 
-grid.arrange(attack, defense, speed, hp, sp_attack, sp_defense)
+grid.arrange(attack_density, defense_density, speed_density, hp_density, sp_attack_density, sp_defense_density)
+
+base_box <- pokemons %>%
+  ggplot() +
+  theme_minimal()
+
+hp_box <- base_box +
+  geom_boxplot(aes(x = HP)) +
+  xlab("Point de vie")
+
+attack_box <- base_box +
+  geom_boxplot(aes(x = Attack)) +
+  xlab("Attaque")
+
+speed_box <- base_box +
+  geom_boxplot(aes(x = Speed)) +
+  xlab("Vitesse")
+
+sp_attack_box <- base_box +
+  geom_boxplot(aes(x = `Sp. Atk`)) +
+  xlab("Attaque spéciale")
+
+sp_defense_box <- base_box +
+  geom_boxplot(aes(x = `Sp. Def`)) +
+  xlab("Défense spéciale")
+
+defense_box <- base_box +
+  geom_boxplot(aes(x = Defense)) +
+  xlab("Défense")
+
+grid.arrange(attack_box, defense_box, speed_box, hp_box, sp_attack_box, sp_defense_box)
+
 ```
 
 
@@ -130,94 +155,86 @@ grid.arrange(attack, defense, speed, hp, sp_attack, sp_defense)
 #Getting pokemons of the same generation than the one we picked
 same_gen_pokemons <- pokemons %>% filter(Generation == pokemon$Generation)
 
-#Creating minimum row
-result.min <- cbind(
-  same_gen_pokemons$HP %>% min(),
-  same_gen_pokemons$Attack %>% min(),
-  same_gen_pokemons$Defense %>% min(),
-  same_gen_pokemons$`Sp. Atk` %>% min(),
-  same_gen_pokemons$`Sp. Def` %>% min(),
-  same_gen_pokemons$Speed %>% min()
+result <- data.frame(
+  HP = c(
+    same_gen_pokemons$HP %>% max(),
+    same_gen_pokemons$HP %>% min(),
+    same_gen_pokemons$HP %>% mean(),
+    pokemon$HP
+    ),
+  Attack = c(
+    same_gen_pokemons$Attack %>% max(),
+    same_gen_pokemons$Attack %>% min(),
+    same_gen_pokemons$Attack %>% mean(),
+    pokemon$Attack
+    ),
+  Defense = c(
+    same_gen_pokemons$Defense %>% max(),
+    same_gen_pokemons$Defense %>% min(),
+    same_gen_pokemons$Defense %>% mean(),
+    pokemon$Defense
+    ),
+  `Sp. Atk` = c(
+    same_gen_pokemons$`Sp. Atk` %>% max(),
+    same_gen_pokemons$`Sp. Atk` %>% min(),
+    same_gen_pokemons$`Sp. Atk` %>% mean(),
+    pokemon$`Sp. Atk`
+    ),
+  `Sp. Def` = c(
+    same_gen_pokemons$`Sp. Def` %>% max(),
+    same_gen_pokemons$`Sp. Def` %>% min(),
+    same_gen_pokemons$`Sp. Def` %>% mean(),
+    pokemon$`Sp. Def`
+    ),
+  Speed = c(
+    same_gen_pokemons$Speed %>% max(),
+    same_gen_pokemons$Speed %>% min(),
+    same_gen_pokemons$Speed %>% mean(),
+    pokemon$Speed
+    ), 
+  row.names = c("Maximum", "Minimum", "Moyenne", pokemon$Name)
   )
-colnames(result.min) <- same_gen_pokemons[5:10] %>% colnames()
-rownames(result.min) <- "Minimum"
-
-#Creating maximum row
-result.max <- cbind(
-  same_gen_pokemons$HP %>% max(),
-  same_gen_pokemons$Attack %>% max(),
-  same_gen_pokemons$Defense %>% max(),
-  same_gen_pokemons$`Sp. Atk` %>% max(),
-  same_gen_pokemons$`Sp. Def` %>% max(),
-  same_gen_pokemons$Speed %>% max()
-  )
-colnames(result.max) <- same_gen_pokemons[5:10] %>% colnames()
-rownames(result.max) <- "Maximum"
-
-#Creating mean row
-result.mean <- cbind(
-  same_gen_pokemons$HP %>% mean(),
-  same_gen_pokemons$Attack %>% mean(),
-  same_gen_pokemons$Defense %>% mean(),
-  same_gen_pokemons$`Sp. Atk` %>% mean(),
-  same_gen_pokemons$`Sp. Def` %>% mean(),
-  same_gen_pokemons$Speed %>% mean()
-  )
-colnames(result.mean) <- same_gen_pokemons[5:10] %>% colnames()
-rownames(result.mean) <- "Moyenne"
-
-#Subdata of our pokemon
-sub <- cbind(
-  pokemon$HP,
-  pokemon$Attack,
-  pokemon$Defense,
-  pokemon$`Sp. Atk`,
-  pokemon$`Sp. Def`,
-  pokemon$Speed
-  )
-colnames(sub) <- same_gen_pokemons[5:10] %>% colnames()
-rownames(sub) <- pokemon$Name
-
-#Gathering results
-result <- rbind(
-  result.max,
-  result.min,
-  result.mean,
-  sub
-  ) %>% as.data.frame()
 
 # Radar chart color assignment
-colors_border <- c( rgb(0.2,0.5,0.5,0.9), rgb(0.8,0.2,0.5,0.9), rgb(0.7,0.5,0.1,0.9))
-colors_in <- c( rgb(0.2,0.5,0.5,0.4), rgb(0.8,0.2,0.5,0.4), rgb(0.7,0.5,0.1,0.4))
+colors_border <- c(
+  rgb(0.2,0.5,0.5,0.9),
+  rgb(0.8,0.2,0.5,0.9),
+  rgb(0.7,0.5,0.1,0.9)
+  )
+colors_in <- c(
+  rgb(0.2,0.5,0.5,0.4),
+  rgb(0.8,0.2,0.5,0.4),
+  rgb(0.7,0.5,0.1,0.4)
+  )
 
 # Creating the chart
 # https://www.rdocumentation.org/packages/fmsb/versions/0.7.0/topics/radarchart
 radarchart(
   result,
-  axistype=1,
-  pcol=colors_border,
-  pfcol=colors_in,
-  plwd=4,
-  plty=1,
-  cglcol="grey",
-  cglty=1,
-  axislabcol="grey",
-  cglwd=0.8,
-  vlcex=0.8,
+  axistype = 1,
+  pcol = colors_border,
+  pfcol = colors_in,
+  plwd = 4,
+  plty = 1,
+  cglcol = "grey",
+  cglty = 1,
+  axislabcol = "grey",
+  cglwd = 0.8,
+  vlcex = 0.8,
   title = paste("Comparaison entre", pokemon$Name) %>% paste("et les pokémons de la même génération.", sep = "\n")
   )
 
 # Add a legend
 legend(
-  x=1.3,
-  y=1.3,
-  legend=rownames(result[-c(1,2),]),
-  bty="n",
-  pch=20,
-  col=colors_in,
-  text.col="black",
-  cex=1.2,
-  pt.cex=3
+  x = 1.3,
+  y = 1.3,
+  legend = rownames(result[-c(1,2),]),
+  bty = "n",
+  pch = 20,
+  col = colors_in,
+  text.col = "black",
+  cex = 1.2,
+  pt.cex = 3
   )
 ```
 
@@ -259,38 +276,43 @@ result["Moyenne",] <- c(
 #Creating the chart
 radarchart(
   result,
-  axistype=1,
-  pcol=colors_border,
-  pfcol=colors_in,
-  plwd=4,
-  plty=1,
-  cglcol="grey",
-  cglty=1,
-  axislabcol="grey",
-  cglwd=0.8,
-  vlcex=0.8,
+  axistype = 1,
+  pcol = colors_border,
+  pfcol = colors_in,
+  plwd = 4,
+  plty = 1,
+  cglcol = "grey",
+  cglty = 1,
+  axislabcol = "grey",
+  cglwd = 0.8,
+  vlcex = 0.8,
   title = paste("Comparaison entre", pokemon$Name) %>% paste("et les pokémons de la même génération et du même type.", sep = "\n")
   )
 
 # Add a legend
 legend(
-  x=1.3,
-  y=1.3,
-  legend=rownames(result[-c(1,2),]),
-  bty="n",
-  pch=20,
-  col=colors_in,
-  text.col="black",
-  cex=1.2,
-  pt.cex=3
+  x = 1.3,
+  y = 1.3,
+  legend = result[-c(1,2),] %>% rownames(),
+  bty = "n",
+  pch = 20,
+  col = colors_in,
+  text.col = "black",
+  cex = 1.2,
+  pt.cex = 3
   )
 
 #Let's determine what our pokemon is capable of compared to the others
 place_off <- ((same_type_pokemons %>% arrange(Attack) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
 place_def <- ((same_type_pokemons %>% arrange(Defense) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
 place_sp_off <- ((same_type_pokemons %>% arrange(`Sp. Atk`) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
 place_sp_def <- ((same_type_pokemons %>% arrange(`Sp. Def`) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
 place_hp <- ((same_type_pokemons %>% arrange(HP) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
 place_speed <- ((same_type_pokemons %>% arrange(Speed) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
 ```
 `r pokemon$Name` se situe de la manière suivante par rapport aux autres pokémons de sa génération et partageant au moins un même type:
