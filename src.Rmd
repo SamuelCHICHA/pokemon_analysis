@@ -57,7 +57,7 @@ Voici un petit aperçu de la base de données :
 
 `r pokemons %>% head() %>% as.data.frame() %>% knitr::kable(format="markdown")`
 
-Les variables _HP_, _Attack_, _Defense_, _Speed_, _Sp. Atk_ et _Sp. Def_ sont des variables quantitatives. Toutes les autres sont qualitatives. En ce qui concerne le _Name_, _Type 1_ et _Type 2_, c'est une __chaîne de caractère__ (modalité la plus fréquente). _L'index_ et la _génération_ sont __numériques__. Enfin, la variable _légendaire_ est un __booléen__ (modalité la moins fréquente).
+Les variables _HP_, _Attack_, _Defense_, _Speed_, _Sp. Atk_ et _Sp. Def_ sont des variables quantitatives. Toutes les autres sont qualitatives. En ce qui concerne le _Name_, _Type 1_ et _Type 2_, ce sont des __chaînes de caractères__ (modalité la plus fréquente). _L'index_ et la _génération_ sont __numériques__. Enfin, la variable _légendaire_ est un __booléen__ (modalité la moins fréquente).
 
 Regardons maintenant comment sont répartis ces variables quantitatives:
 
@@ -125,6 +125,9 @@ grid.arrange(attack_box, defense_box, speed_box, hp_box, sp_attack_box, sp_defen
 
 ```
 
+Ici, on peut constater une certaine asymétrie à gauche sur toutes les "bôites à moustaches" ainsi que sur les courbes de densité. On peut également voir un grand nombre __d'aberrations__ sur les données représentant les points de vie des pokémons. 
+
+Nos données ne sont donc pas très bien réparties.
 
 # Etude du pokémon
 
@@ -148,8 +151,12 @@ grid.arrange(attack_box, defense_box, speed_box, hp_box, sp_attack_box, sp_defen
 > __Défense spécial__: `r pokemon$'Sp. Def'`
 >
 > __Vitesse__: `r pokemon$Speed`
+>
+> `r if(pokemon$Legendary == TRUE) "__Légendaire__"`
 
 2. Comparaison avec les pokémons issus de la même génération
+
+On aimerait comparer `r pokemon$Name` avec les autres pokémons de sa génération. On va choisir d'utiliser ici un _radar chart_ pour pouvoir comparer toutes ses caractéristiques en même temps.
 
 ```{r First comparison}
 #Getting pokemons of the same generation than the one we picked
@@ -236,15 +243,55 @@ legend(
   cex = 1.2,
   pt.cex = 3
   )
+
+#Let's determine what our pokemon is capable of compared to the others
+place_off <- ((same_gen_pokemons %>% arrange(Attack) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
+place_def <- ((same_gen_pokemons %>% arrange(Defense) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
+place_sp_off <- ((same_gen_pokemons %>% arrange(`Sp. Atk`) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
+place_sp_def <- ((same_gen_pokemons %>% arrange(`Sp. Def`) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
+place_hp <- ((same_gen_pokemons %>% arrange(HP) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
+place_speed <- ((same_gen_pokemons %>% arrange(Speed) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
 ```
+
+En regardant le graphique on peut constater que `r pokemon$Name` a `r ifelse(result[pokemon$Name, "HP"] > result["Moyenne", "HP"], "plus", "moins")` de points de vie que la moyenne des autres pokémons de sa génération.
+
+Regardons maintenant pour ses autres caractéristiques :
+
+* `r ifelse(result[pokemon$Name, "Speed"] > result["Moyenne", "Speed"], "Plus", "Moins")` de vitesse que la moyenne. 
+* `r ifelse(result[pokemon$Name, "Attack"] > result["Moyenne", "Attack"], "Plus", "Moins")` d'attaque que la moyenne.
+* `r ifelse(result[pokemon$Name, "Defense"] > result["Moyenne", "Defense"], "Plus", "Moins")` de défense que la moyenne.
+* `r ifelse(result[pokemon$Name, "Sp..Atk"] > result["Moyenne", "Sp..Atk"], "Plus", "Moins")` d'attaque spéciale que la moyenne.
+* `r ifelse(result[pokemon$Name, "Sp..Def"] > result["Moyenne", "Sp..Def"], "Plus", "Moins")` de défense spéciale que la moyenne.
+
+Maintenant que nous avons placé `r pokemon$Name` par rapport à la moyenne des pokémons de sa génération, essayons désormais de le classer en faisant un top.
+
+Il fait partie du top: 
+
+* `r 100-place_speed`% avec le plus de vitesse.
+
+* `r 100-place_off`% avec le plus d'attaque.
+
+* `r 100-place_def`% avec le plus de défense.
+
+* `r 100-place_sp_off`% avec le plus d'attaque spéciale.
+
+* `r 100-place_sp_def`% avec le plus de défense spéciale.
+
+* `r 100-place_hp`% avec le plus de points de vie.
+
 
 3. Comparaison avec les pokémons ayant les mêmes types
 
 ```{r Second comparison}
 #Getting pokemons of the same generation and same type than the one we picked
-same_type_pokemons <- same_gen_pokemons %>% filter(`Type 1` == pokemon$`Type 1`) #Better ?
+same_type_pokemons <- same_gen_pokemons %>% filter(`Type 1` == pokemon$`Type 1`)
 if(!is.na(pokemon$`Type 2`))
-  same_type_pokemons <- same_type_pokemons %>% filter(`Type 2` == pokemon$`Type 2`)
+  same_type_pokemons <- same_type_pokemons %>% union(same_gen_pokemons %>% filter(`Type 2` == pokemon$`Type 2`)) 
 
 result["Maximum", ] <- c(
   same_type_pokemons$HP %>% max(),
@@ -315,6 +362,19 @@ place_hp <- ((same_type_pokemons %>% arrange(HP) %>% select(Name) == pokemon$Nam
 
 place_speed <- ((same_type_pokemons %>% arrange(Speed) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
 ```
+
+En regardant le graphique on peut constater que `r pokemon$Name` a `r ifelse(result[pokemon$Name, "HP"] > result["Moyenne", "HP"], "plus", "moins")` de points de vie que la moyenne des autres pokémons de sa génération.
+
+Regardons maintenant pour ses autres caractéristiques :
+
+* `r ifelse(result[pokemon$Name, "Speed"] > result["Moyenne", "Speed"], "Plus", "Moins")` de vitesse que la moyenne. 
+* `r ifelse(result[pokemon$Name, "Attack"] > result["Moyenne", "Attack"], "Plus", "Moins")` d'attaque que la moyenne.
+* `r ifelse(result[pokemon$Name, "Defense"] > result["Moyenne", "Defense"], "Plus", "Moins")` de défense que la moyenne.
+* `r ifelse(result[pokemon$Name, "Sp..Atk"] > result["Moyenne", "Sp..Atk"], "Plus", "Moins")` d'attaque spéciale que la moyenne.
+* `r ifelse(result[pokemon$Name, "Sp..Def"] > result["Moyenne", "Sp..Def"], "Plus", "Moins")` de défense spéciale que la moyenne.
+
+Maintenant que nous avons placé `r pokemon$Name` par rapport à la moyenne des pokémons de sa génération, essayons désormais de le classer en faisant un top.
+
 `r pokemon$Name` se situe de la manière suivante par rapport aux autres pokémons de sa génération et partageant au moins un même type:
 
 Il fait partie du top: 
@@ -384,3 +444,5 @@ Voici un pokémon qui pourrait battre Lugia:
 > __Défense spécial__: `r best_pokemon$'Sp. Def'`
 >
 > __Vitesse__: `r best_pokemon$Speed`
+
+En effet, ce pokémon non légendaire possède non seulement des types efficaces offensivement contre Lugia, mais il possède également de bonnes caractéristiques.
