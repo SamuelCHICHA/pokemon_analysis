@@ -1,11 +1,21 @@
 ---
-Rtitle: "Projet Final"
+title: "Projet Final"
 author: "Samuel CHICHA"
-date: "10/03/2020"
+date: "12 Avril 2020"
 output: pdf_document
 params:
   pokemon: "Persian"
 ---
+
+\raggedright
+
+\centering
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
