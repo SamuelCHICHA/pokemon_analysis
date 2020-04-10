@@ -9,8 +9,6 @@ params:
 
 \raggedright
 
-\centering
-
 \clearpage
 
 \tableofcontents
@@ -69,7 +67,7 @@ Voici un petit aperçu de la base de données :
 
 Les variables _HP_, _Attack_, _Defense_, _Speed_, _Sp. Atk_ et _Sp. Def_ sont des variables quantitatives. Toutes les autres sont qualitatives. En ce qui concerne le _Name_, _Type 1_ et _Type 2_, ce sont des __chaînes de caractères__ (modalité la plus fréquente). _L'index_ et la _génération_ sont __numériques__. Enfin, la variable _légendaire_ est un __booléen__ (modalité la moins fréquente).
 
-Regardons maintenant comment sont répartis ces variables quantitatives:
+On veut s'intéresser maintenant un peu plus aux données et comment celles-ci sont répartis. Pour cela, on va utiliser deux graphiques différents pour représenter cette répartition, une _courbe de densité_ et une _boîte à moustache_.
 
 ```{r Introduction to the database, 2nd}
 
