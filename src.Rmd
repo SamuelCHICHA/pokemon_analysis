@@ -32,13 +32,20 @@ if(!require(ggplot2)){
   install.packages("ggplot2")
   require(ggplot2)
 }
+#radarchart
 if(!require(fmsb)){
   install.packages("fmsb")
   require(fmsb)
 }
+#grid.arrange
 if(!require(gridExtra)){
   install.packages("gridExtra")
   require(gridExtra)
+}
+#ggpairs
+if(!require(GGally)){
+  install.packages("GGally")
+  require(GGally)
 }
 #Downloading pokemon dataset if it is not there already.
 if(!file.exists("data/pokemon.csv"))
@@ -52,14 +59,9 @@ pokemons <- read_csv("data/pokemon.csv")
 
 # Base de données
 
-```{r Introduction to the database, 1st}
-pokemon <- pokemons %>% filter(Name == params$pokemon)
-if(pokemon %>% nrow() != 1) stop("Le pokémon n'existe pas.")
-```
-
 Nous allons étudier une base de données portant sur __pokémons__. Celle-ci comporte des données sur `r pokemons %>% nrow()` d'entre eux. Parmi ces données, on peut retrouver leurs caractéristiques tel que la __vitesse__, __l'attaque__, la __défense__, __l'attaque spéciale__, la __défénse spéciale__ et les __points de vie__. Nous savons à quelle __génération__ chacun d'entre eux appartient, quels __types__ (herbe, vol, feu, etc..) ils possèdent et si oui ou non ce sont des pokémons __légendaires__.
 
-Nous étudierons ici le pokémon nommé __`r pokemon$Name`__.
+Nous étudierons ici le pokémon nommé __`r params$pokemon`__.
 
 Voici un petit aperçu de la base de données :
 
@@ -67,39 +69,43 @@ Voici un petit aperçu de la base de données :
 
 Les variables _HP_, _Attack_, _Defense_, _Speed_, _Sp. Atk_ et _Sp. Def_ sont des variables quantitatives. Toutes les autres sont qualitatives. En ce qui concerne le _Name_, _Type 1_ et _Type 2_, ce sont des __chaînes de caractères__ (modalité la plus fréquente). _L'index_ et la _génération_ sont __numériques__. Enfin, la variable _légendaire_ est un __booléen__ (modalité la moins fréquente).
 
-On veut s'intéresser maintenant un peu plus aux données et comment celles-ci sont répartis. Pour cela, on va utiliser deux graphiques différents pour représenter cette répartition, une _courbe de densité_ et une _boîte à moustache_.
+On veut s'intéresser maintenant un peu plus aux données et comment celles-ci sont réparties. Pour cela, on va utiliser deux graphiques différents pour représenter cette répartition, une _courbe de densité_ et une _boîte à moustache_. 
 
 ```{r Introduction to the database, 2nd}
 
-base_density <- pokemons %>% 
-  ggplot() +
-  theme_minimal() + ylab("Densité")
-
-speed_density <- base_density +
-  geom_density(aes(x = Speed)) +
-  xlab("Vitesse")
-
-attack_density <- base_density +
-  geom_density(aes(x = Attack)) +
-  xlab("Attaque")
-
-defense_density <- base_density +
-  geom_density(aes(x = Defense)) +
-  xlab("Défense")
-
-sp_attack_density <- base_density +
-  geom_density(aes(x = `Sp. Atk`)) +
-  xlab("Attaque spéciale")
-
-sp_defense_density <- base_density +
-  geom_density(aes(x = `Sp. Def`)) +
-  xlab("Défense spéciale")
-
-hp_density <- base_density +
-  geom_density(aes(x = HP)) +
-  xlab("Point de vie")
-
-grid.arrange(attack_density, defense_density, speed_density, hp_density, sp_attack_density, sp_defense_density)
+# base_density <- pokemons %>% 
+#   ggplot() +
+#   theme_minimal() + ylab("Densité")
+# 
+# speed_density <- base_density +
+#   geom_density(aes(x = Speed)) +
+#   xlab("Vitesse")
+# 
+# attack_density <- base_density +
+#   geom_density(aes(x = Attack)) +
+#   xlab("Attaque")
+# 
+# defense_density <- base_density +
+#   geom_density(aes(x = Defense)) +
+#   xlab("Défense")
+# 
+# sp_attack_density <- base_density +
+#   geom_density(aes(x = `Sp. Atk`)) +
+#   xlab("Attaque spéciale")
+# 
+# sp_defense_density <- base_density +
+#   geom_density(aes(x = `Sp. Def`)) +
+#   xlab("Défense spéciale")
+# 
+# hp_density <- base_density +
+#   geom_density(aes(x = HP)) +
+#   xlab("Point de vie")
+# 
+# grid.arrange(
+#   attack_density,
+#   defense_density,
+#   speed_density,
+#   hp_density, sp_attack_density, sp_defense_density)
 
 base_box <- pokemons %>%
   ggplot() +
@@ -129,15 +135,87 @@ defense_box <- base_box +
   geom_boxplot(aes(x = Defense)) +
   xlab("Défense")
 
-grid.arrange(attack_box, defense_box, speed_box, hp_box, sp_attack_box, sp_defense_box)
+grid.arrange(
+  attack_box,
+  defense_box,
+  speed_box,
+  hp_box,
+  sp_attack_box,
+  sp_defense_box
+)
+
+rescale <- function(min, max, value) return((value-min)/(max-min) * 100)
+
+#Setting a grade for each pokemon based on a new scale so it is more realiable
+Grade <- mapply(
+  function(
+    min_speed,
+    speed,
+    max_speed,
+    min_attack,
+    attack,
+    max_attack,
+    min_defense,
+    defense,
+    max_defense,
+    min_sp_atk,
+    sp_atk,
+    max_sp_atk,
+    min_sp_def,
+    sp_def,
+    max_sp_def,
+    min_hp,
+    hp,
+    max_hp
+  ) (
+    (rescale(min_speed, max_speed, speed) 
+     + rescale(min_attack, max_attack, attack)
+     + rescale(min_defense, max_defense, defense)
+     + rescale(min_sp_atk, max_sp_atk, sp_atk)
+     + rescale(min_sp_def, max_sp_def, sp_def)
+     + rescale(min_hp, max_hp, hp)
+    )/6), 
+  pokemons$Speed %>% min(),
+  pokemons$Speed,
+  pokemons$Speed %>% max(),
+  pokemons$Attack %>% min(),
+  pokemons$Attack,
+  pokemons$Attack %>% max(),
+  pokemons$Defense %>% min(),
+  pokemons$Defense,
+  pokemons$Defense %>% max(),
+  pokemons$`Sp. Atk` %>% min(),
+  pokemons$`Sp. Atk`,
+  pokemons$`Sp. Atk` %>% max(),
+  pokemons$`Sp. Def` %>% min(),
+  pokemons$`Sp. Def`,
+  pokemons$`Sp. Def` %>% max(),
+  pokemons$HP %>% min(),
+  pokemons$HP,
+  pokemons$HP %>% max()
+)
+
+pokemons <- pokemons %>% cbind(Grade)
+pokemon <- pokemons %>% filter(Name == params$pokemon)
+if(pokemon %>% nrow() != 1) stop("Le pokémon n'existe pas.")
 
 ```
 
-Ici, on peut constater une certaine asymétrie à gauche sur toutes les "bôites à moustaches" ainsi que sur les courbes de densité. On peut également voir un grand nombre __d'aberrations__ sur les données représentant les points de vie des pokémons. 
+Ici, on peut constater une certaine asymétrie à gauche sur toutes les _boîtes à moustaches_ ainsi que sur les courbes de densité. On peut également voir un grand nombre __d'aberrations__ sur les données représentant les points de vie des pokémons. 
 
-Nos données ne sont donc pas très bien réparties.
+Nous allons aussi regarder la corrélation entre les différentes variables.
 
-# Etude du pokémon
+\clearpage
+
+```{r Pair plot}
+pokemons[c(5:10)] %>% ggpairs()
+```
+
+On peut également constater qu'il n'y a pas de forte corrélation entre les différentes variables.
+
+\clearpage
+
+# __Etude du pokémon__
 
 1. Fiche du pokémon
 
@@ -176,51 +254,51 @@ result <- data.frame(
     same_gen_pokemons$HP %>% min(),
     same_gen_pokemons$HP %>% mean(),
     pokemon$HP
-    ),
+  ),
   Attack = c(
     same_gen_pokemons$Attack %>% max(),
     same_gen_pokemons$Attack %>% min(),
     same_gen_pokemons$Attack %>% mean(),
     pokemon$Attack
-    ),
+  ),
   Defense = c(
     same_gen_pokemons$Defense %>% max(),
     same_gen_pokemons$Defense %>% min(),
     same_gen_pokemons$Defense %>% mean(),
     pokemon$Defense
-    ),
+  ),
   `Sp. Atk` = c(
     same_gen_pokemons$`Sp. Atk` %>% max(),
     same_gen_pokemons$`Sp. Atk` %>% min(),
     same_gen_pokemons$`Sp. Atk` %>% mean(),
     pokemon$`Sp. Atk`
-    ),
+  ),
   `Sp. Def` = c(
     same_gen_pokemons$`Sp. Def` %>% max(),
     same_gen_pokemons$`Sp. Def` %>% min(),
     same_gen_pokemons$`Sp. Def` %>% mean(),
     pokemon$`Sp. Def`
-    ),
+  ),
   Speed = c(
     same_gen_pokemons$Speed %>% max(),
     same_gen_pokemons$Speed %>% min(),
     same_gen_pokemons$Speed %>% mean(),
     pokemon$Speed
-    ), 
+  ), 
   row.names = c("Maximum", "Minimum", "Moyenne", pokemon$Name)
-  )
+)
 
 # Radar chart color assignment
 colors_border <- c(
   rgb(0.2,0.5,0.5,0.9),
   rgb(0.8,0.2,0.5,0.9),
   rgb(0.7,0.5,0.1,0.9)
-  )
+)
 colors_in <- c(
   rgb(0.2,0.5,0.5,0.4),
   rgb(0.8,0.2,0.5,0.4),
   rgb(0.7,0.5,0.1,0.4)
-  )
+)
 
 # Creating the chart
 # https://www.rdocumentation.org/packages/fmsb/versions/0.7.0/topics/radarchart
@@ -237,7 +315,7 @@ radarchart(
   cglwd = 0.8,
   vlcex = 0.8,
   title = paste("Comparaison entre", pokemon$Name) %>% paste("et les pokémons de la même génération.", sep = "\n")
-  )
+)
 
 # Add a legend
 legend(
@@ -250,7 +328,7 @@ legend(
   text.col = "black",
   cex = 1.2,
   pt.cex = 3
-  )
+)
 
 #Let's determine what our pokemon is capable of compared to the others
 place_off <- ((same_gen_pokemons %>% arrange(Attack) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
@@ -264,21 +342,13 @@ place_sp_def <- ((same_gen_pokemons %>% arrange(`Sp. Def`) %>% select(Name) == p
 place_hp <- ((same_gen_pokemons %>% arrange(HP) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
 
 place_speed <- ((same_gen_pokemons %>% arrange(Speed) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
+place <- ((same_gen_pokemons %>% arrange(Grade) %>% select(Name) == pokemon$Name) %>% which() / same_gen_pokemons %>% nrow() * 100) %>% round()
+
 ```
+\clearpage
 
-En regardant le graphique on peut constater que `r pokemon$Name` a `r ifelse(result[pokemon$Name, "HP"] > result["Moyenne", "HP"], "plus", "moins")` de points de vie que la moyenne des autres pokémons de sa génération.
-
-Regardons maintenant pour ses autres caractéristiques :
-
-* `r ifelse(result[pokemon$Name, "Speed"] > result["Moyenne", "Speed"], "Plus", "Moins")` de vitesse que la moyenne. 
-* `r ifelse(result[pokemon$Name, "Attack"] > result["Moyenne", "Attack"], "Plus", "Moins")` d'attaque que la moyenne.
-* `r ifelse(result[pokemon$Name, "Defense"] > result["Moyenne", "Defense"], "Plus", "Moins")` de défense que la moyenne.
-* `r ifelse(result[pokemon$Name, "Sp..Atk"] > result["Moyenne", "Sp..Atk"], "Plus", "Moins")` d'attaque spéciale que la moyenne.
-* `r ifelse(result[pokemon$Name, "Sp..Def"] > result["Moyenne", "Sp..Def"], "Plus", "Moins")` de défense spéciale que la moyenne.
-
-Maintenant que nous avons placé `r pokemon$Name` par rapport à la moyenne des pokémons de sa génération, essayons désormais de le classer en faisant un top.
-
-Il fait partie du top: 
+`r pokemon$Name` fait partie du top: 
 
 * `r 100-place_speed`% avec le plus de vitesse.
 
@@ -292,8 +362,14 @@ Il fait partie du top:
 
 * `r 100-place_hp`% avec le plus de points de vie.
 
+La note qui lui a été attribué à partir de ses caractéristiques est `r pokemon$Grade %>% round(2)`/100 et fait de lui le top `r place`% parmi ses semblables.
+
+`r  if(pokemon$Name == "Persian") "Persian est donc un pokémon assez moyen par rapport au reste des pokémons de sa génération et qui ont un même type."`
+
 
 3. Comparaison avec les pokémons ayant les mêmes types
+
+On se pose la même question pour les pokémons non seulement de la même génération mais aussi qui possèdent au moins un même type.
 
 ```{r Second comparison}
 #Getting pokemons of the same generation and same type than the one we picked
@@ -308,7 +384,7 @@ result["Maximum", ] <- c(
   same_type_pokemons$`Sp. Atk` %>% max(), 
   same_type_pokemons$`Sp. Def` %>% max(), 
   same_type_pokemons$Speed %>% max()
-  )
+)
 
 result["Minimum", ] <- c(
   same_type_pokemons$HP %>% min(),
@@ -317,7 +393,7 @@ result["Minimum", ] <- c(
   same_type_pokemons$`Sp. Atk` %>% min(),
   same_type_pokemons$`Sp. Def` %>% min(),
   same_type_pokemons$Speed %>% min()
-  )
+)
 
 result["Moyenne",] <- c(
   same_type_pokemons$HP %>% mean(),
@@ -326,7 +402,7 @@ result["Moyenne",] <- c(
   same_type_pokemons$`Sp. Atk` %>% mean(),
   same_type_pokemons$`Sp. Def` %>% mean(),
   same_type_pokemons$Speed %>% mean()
-  )
+)
 
 #Creating the chart
 radarchart(
@@ -342,7 +418,7 @@ radarchart(
   cglwd = 0.8,
   vlcex = 0.8,
   title = paste("Comparaison entre", pokemon$Name) %>% paste("et les pokémons de la même génération et du même type.", sep = "\n")
-  )
+)
 
 # Add a legend
 legend(
@@ -355,7 +431,7 @@ legend(
   text.col = "black",
   cex = 1.2,
   pt.cex = 3
-  )
+)
 
 #Let's determine what our pokemon is capable of compared to the others
 place_off <- ((same_type_pokemons %>% arrange(Attack) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
@@ -369,19 +445,11 @@ place_sp_def <- ((same_type_pokemons %>% arrange(`Sp. Def`) %>% select(Name) == 
 place_hp <- ((same_type_pokemons %>% arrange(HP) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
 
 place_speed <- ((same_type_pokemons %>% arrange(Speed) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
+place <- ((same_type_pokemons %>% arrange(Grade) %>% select(Name) == pokemon$Name) %>% which() / same_type_pokemons %>% nrow() * 100) %>% round()
+
 ```
-
-En regardant le graphique on peut constater que `r pokemon$Name` a `r ifelse(result[pokemon$Name, "HP"] > result["Moyenne", "HP"], "plus", "moins")` de points de vie que la moyenne des autres pokémons de sa génération.
-
-Regardons maintenant pour ses autres caractéristiques :
-
-* `r ifelse(result[pokemon$Name, "Speed"] > result["Moyenne", "Speed"], "Plus", "Moins")` de vitesse que la moyenne. 
-* `r ifelse(result[pokemon$Name, "Attack"] > result["Moyenne", "Attack"], "Plus", "Moins")` d'attaque que la moyenne.
-* `r ifelse(result[pokemon$Name, "Defense"] > result["Moyenne", "Defense"], "Plus", "Moins")` de défense que la moyenne.
-* `r ifelse(result[pokemon$Name, "Sp..Atk"] > result["Moyenne", "Sp..Atk"], "Plus", "Moins")` d'attaque spéciale que la moyenne.
-* `r ifelse(result[pokemon$Name, "Sp..Def"] > result["Moyenne", "Sp..Def"], "Plus", "Moins")` de défense spéciale que la moyenne.
-
-Maintenant que nous avons placé `r pokemon$Name` par rapport à la moyenne des pokémons de sa génération, essayons désormais de le classer en faisant un top.
+\clearpage
 
 `r pokemon$Name` se situe de la manière suivante par rapport aux autres pokémons de sa génération et partageant au moins un même type:
 
@@ -399,8 +467,11 @@ Il fait partie du top:
 
 * `r 100-place_hp`% avec le plus de points de vie.
 
+La note qui lui a été attribué à partir de ses caractéristiques est `r pokemon$Grade %>% round(2)`/100 et fait de lui le top `r place`% parmi ses semblables.
 
-# Battre Lugia
+`r  if(pokemon$Name == "Persian") "Persian est donc un pokémon suffisamment fort par rapport au reste des pokémons de sa génération et qui ont un même type."`
+
+# __Battre Lugia__
 
 ```{r Recherche pokémon pouvant battre Lugia}
 lugia <- pokemons %>% filter(Name == 'Lugia')
@@ -432,25 +503,17 @@ best_pokemon <- effective_pokemons %>%
   filter(Attack == max(effective_pokemons$Attack)) #We keep only the one with the best attack score.
 ```
 
-Voici un pokémon qui pourrait battre Lugia:
+`r best_pokemon$Name` semble être le meilleur choix pour défaire Lugia.
 
->
-> __Nom__: `r best_pokemon$Name`
->
-> __Type 1__: `r best_pokemon$'Type 1'`
->
-> __Type 2__: `r ifelse(!is.na(best_pokemon %>% select("Type 2")), best_pokemon %>% select("Type 2"), "None")`
->
-> __Points de vie__: `r best_pokemon$HP`
->
-> __Attaque__: `r best_pokemon$Attack`
->
-> __Defense__: `r best_pokemon$Defense`
->
-> __Attaque spécial__: `r best_pokemon$'Sp. Atk'`
->
-> __Défense spécial__: `r best_pokemon$'Sp. Def'`
->
-> __Vitesse__: `r best_pokemon$Speed`
+| | __`r lugia$Name`__ | __`r best_pokemon$Name`__ |
+|-----|----------------|-----------------------|
+| __Attaque__ | `r lugia$Attack` | `r best_pokemon$Attack` |
+| __Défense__ | `r lugia$Defense` | `r best_pokemon$Defense` |
+| __Type 1__ | `r lugia %>% select("Type 1")` | `r best_pokemon %>% select("Type 1")` |
+| __Type 2__ | `r lugia %>% select("Type 2")` | `r best_pokemon %>% select("Type 2")` |
+| __Attaque spéciale__ | `r lugia %>% select("Sp. Atk")` | `r best_pokemon %>% select("Sp. Atk")` |
+| __Défense spéciale__ | `r lugia %>% select("Sp. Def")` | `r best_pokemon %>% select("Sp. Def")` |
+| __Vitesse__ | `r lugia$Speed` | `r best_pokemon$Speed` |
+| __Point de vie__ | `r lugia$HP` | `r best_pokemon$HP` |
 
 En effet, ce pokémon non légendaire possède non seulement des types efficaces offensivement contre Lugia, mais il possède également de bonnes caractéristiques.

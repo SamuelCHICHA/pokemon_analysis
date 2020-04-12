@@ -1,4 +1,2 @@
-### Questions ###
-- NA instead of name 
-- Label for color of the bar plot
-- Label for the horizontal lines
+### IDÉES ###
+- Moyenne générale pondéré (pokemon$C - min(C)) / (max(C) - min(C)) 1
