@@ -1,11 +1,11 @@
-# Prérequis
+# Pokemon analysis
 
-On doit disposer de la version 1.2.5033 de RStudio et de la version 3.6.1 de R. 
-Le fonctionnement n'est pas assuré autrement.
+## Prerequisites
 
-# Étude d'un pokémon
+Version 1.2.5033 of RStudio and version 3.6.1 of R are required.
 
-*On peut paramétrer knit pour spécifier un pokémon en particulier pour l'étude.*
+## Analysis
 
-On étudie d'abord le dataset sur les pokémons, notamment le nombre d'entrées, de pokémons légendaires, etc..
-Ensuite, on étudie le pokémon qui a été choisi, ses caractéristiques et son placement par rapport aux autres par rapport à ces dernières. Enfin, on recherchera un pokémon pouvant battre Lugia.
+*You can configure knit to analyze a specific pokemon.*
+
+This script starts by analyzing the dataset, the number of rows, legendary pokemons and other features. Then it studies the pokemon which was picked, its caracteristics and place him on a ladder. At last, it finds a pokemon that might beat Lugia.
