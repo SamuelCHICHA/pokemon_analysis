@@ -1,2 +1,0 @@
-### IDÉES ###
-- Moyenne générale pondéré (pokemon$C - min(C)) / (max(C) - min(C)) 1
